@@ -27,7 +27,7 @@ All mappings and stick-inversion options can be customized in `mod/SteamFrameCon
 
 1. **Install the F4SEVR plugin**: Install `SteamFrameControls-MO2.zip` with Mod Organizer 2 (or copy `mod/SteamFrameControls/F4SE` into your Fallout 4 VR `Data` folder) and enable it.
 2. **Import the SteamVR binding**: In SteamVR → **Settings → Controllers → Manage Controller Bindings → Fallout 4 VR**, switch to **Custom**, import `steam.app.611660_frame_controller.json` (*"Fallout 4 VR - Steam Frame Controls v1.3 (F4SEVR)"*), and click **Save**. Alternatively, copy `steam.app.611660_frame_controller.json` into `%USERPROFILE%\Documents\steamvr\input\imports\` and select it in SteamVR's controller bindings UI.
-3. Launch Fallout 4 VR via **F4SEVR** / MO2.
+3. Launch Fallout 4 VR via **F4SEVR / MO2**.
 
 ## Building from Source
 
