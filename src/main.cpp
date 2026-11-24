@@ -89,14 +89,13 @@ static_assert(sizeof(VRControllerState_t) == 64, "VRControllerState_t must be 64
 
 constexpr uint64_t BitMask(int bit) { return 1ULL << bit; }
 
+constexpr int kBtn_System          = 0;
 constexpr int kBtn_ApplicationMenu = 1;
 constexpr int kBtn_Grip            = 2;
 constexpr int kBtn_A               = 7;
 constexpr int kBtn_Axis0           = 32; // Thumbstick
 constexpr int kBtn_Axis1           = 33; // Trigger
-constexpr int kBtn_Axis2           = 34; // Grip / Left Bumper carrier
-constexpr int kBtn_Axis3           = 35; // Carrier bit A
-constexpr int kBtn_Axis4           = 36; // Carrier bit B
+constexpr int kBtn_Axis2           = 34; // Grip / Carrier bit
 
 constexpr int kRole_LeftHand  = 1;
 constexpr int kRole_RightHand = 2;
@@ -552,7 +551,10 @@ static bool ApplyActionToState(TargetAction a, bool isLeftHand, VRControllerStat
 static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
     if (!st) return;
 
-    // 1. Extract our 9 Steam Frame carrier bits from this hand and strip them
+    const uint64_t rawPressed = st->ulButtonPressed;
+    const uint64_t rawTouched = st->ulButtonTouched;
+
+    // 1. Extract our Steam Frame carrier bits (100% Oculus Touch-compatible!) and strip them
     uint32_t handBits = 0;
     uint32_t handMask = 0;
 
@@ -561,31 +563,29 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
                    (1u << static_cast<int>(FrameButton::DpadRight)) |
                    (1u << static_cast<int>(FrameButton::DpadUp))    |
                    (1u << static_cast<int>(FrameButton::DpadDown))  |
-                   (1u << static_cast<int>(FrameButton::LeftBumper));
+                   (1u << static_cast<int>(FrameButton::LeftBumper))|
+                   (1u << static_cast<int>(FrameButton::RightMenu)); // Left View reuses RightMenu slot (Pause/Cancel)
 
-        if (st->ulButtonPressed & BitMask(kBtn_Axis3)) handBits |= (1u << static_cast<int>(FrameButton::DpadLeft));
-        if (st->ulButtonPressed & BitMask(kBtn_Axis4)) handBits |= (1u << static_cast<int>(FrameButton::DpadRight));
-        if (st->ulButtonTouched & BitMask(kBtn_Axis3)) handBits |= (1u << static_cast<int>(FrameButton::DpadUp));
-        if (st->ulButtonTouched & BitMask(kBtn_Axis4)) handBits |= (1u << static_cast<int>(FrameButton::DpadDown));
-        if (st->ulButtonPressed & BitMask(kBtn_Axis2)) handBits |= (1u << static_cast<int>(FrameButton::LeftBumper));
+        if (st->ulButtonPressed & BitMask(kBtn_A))               handBits |= (1u << static_cast<int>(FrameButton::DpadLeft));
+        if (st->ulButtonPressed & BitMask(kBtn_ApplicationMenu)) handBits |= (1u << static_cast<int>(FrameButton::DpadRight));
+        if (st->ulButtonTouched & BitMask(kBtn_A))               handBits |= (1u << static_cast<int>(FrameButton::DpadUp));
+        if (st->ulButtonTouched & BitMask(kBtn_ApplicationMenu)) handBits |= (1u << static_cast<int>(FrameButton::DpadDown));
+        if (st->ulButtonPressed & BitMask(kBtn_Axis2))           handBits |= (1u << static_cast<int>(FrameButton::LeftBumper));
+        if (st->ulButtonTouched & BitMask(kBtn_System))          handBits |= (1u << static_cast<int>(FrameButton::RightMenu));
 
-        // Strip carrier bits so Fallout 4 VR never sees unknown legacy bits
-        st->ulButtonPressed &= ~(BitMask(kBtn_Axis2) | BitMask(kBtn_Axis3) | BitMask(kBtn_Axis4));
-        st->ulButtonTouched &= ~(BitMask(kBtn_Axis3) | BitMask(kBtn_Axis4));
+        // Strip carrier bits before injecting context-aware actions
+        st->ulButtonPressed &= ~(BitMask(kBtn_A) | BitMask(kBtn_ApplicationMenu) | BitMask(kBtn_Axis2));
+        st->ulButtonTouched &= ~(BitMask(kBtn_A) | BitMask(kBtn_ApplicationMenu) | BitMask(kBtn_System));
     } else {
-        handMask = (1u << static_cast<int>(FrameButton::RightX))      |
-                   (1u << static_cast<int>(FrameButton::RightY))      |
-                   (1u << static_cast<int>(FrameButton::RightBumper)) |
-                   (1u << static_cast<int>(FrameButton::RightMenu));
+        handMask = (1u << static_cast<int>(FrameButton::RightX)) |
+                   (1u << static_cast<int>(FrameButton::RightY));
 
-        if (st->ulButtonPressed & BitMask(kBtn_Axis3)) handBits |= (1u << static_cast<int>(FrameButton::RightX));
-        if (st->ulButtonPressed & BitMask(kBtn_Axis4)) handBits |= (1u << static_cast<int>(FrameButton::RightY));
-        if (st->ulButtonTouched & BitMask(kBtn_Axis3)) handBits |= (1u << static_cast<int>(FrameButton::RightBumper));
-        if (st->ulButtonTouched & BitMask(kBtn_Axis4)) handBits |= (1u << static_cast<int>(FrameButton::RightMenu));
+        if (st->ulButtonPressed & BitMask(kBtn_Axis2))  handBits |= (1u << static_cast<int>(FrameButton::RightX));
+        if (st->ulButtonTouched & BitMask(kBtn_System)) handBits |= (1u << static_cast<int>(FrameButton::RightY));
 
         // Strip carrier bits
-        st->ulButtonPressed &= ~(BitMask(kBtn_Axis3) | BitMask(kBtn_Axis4));
-        st->ulButtonTouched &= ~(BitMask(kBtn_Axis3) | BitMask(kBtn_Axis4));
+        st->ulButtonPressed &= ~BitMask(kBtn_Axis2);
+        st->ulButtonTouched &= ~BitMask(kBtn_System);
     }
 
     // Atomically update this hand's slice of the combined pressed bitmask
@@ -595,27 +595,45 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
         next = (prev & ~handMask) | (handBits & handMask);
     } while (!g_frameButtonsPressedMask.compare_exchange_weak(prev, next, std::memory_order_acq_rel));
 
-    if (next == 0) return;
-
-    // 2. Apply all active actions targeting this hand (including cross-hand triggers!)
     int ctxIdx = g_activeContext.load(std::memory_order_acquire);
     if (ctxIdx < 0 || ctxIdx >= static_cast<int>(MenuContext::Count)) {
         ctxIdx = static_cast<int>(MenuContext::Gameplay);
     }
 
-    const auto& mapping = g_config[ctxIdx].map;
     bool modified = false;
-    for (int b = 0; b < static_cast<int>(FrameButton::Count); ++b) {
-        if (next & (1u << b)) {
-            if (ApplyActionToState(mapping[b], isLeftHand, st)) {
-                modified = true;
+    if (next != 0) {
+        const auto& mapping = g_config[ctxIdx].map;
+        for (int b = 0; b < static_cast<int>(FrameButton::Count); ++b) {
+            if (next & (1u << b)) {
+                if (ApplyActionToState(mapping[b], isLeftHand, st)) {
+                    modified = true;
+                }
             }
+        }
+
+        if (modified) {
+            static std::atomic<uint32_t> s_synthPacketOffset{ 0 };
+            st->unPacketNum += (++s_synthPacketOffset & 0xFFFFu);
         }
     }
 
-    if (modified) {
-        static std::atomic<uint32_t> s_synthPacketOffset{ 0 };
-        st->unPacketNum += (++s_synthPacketOffset & 0xFFFFu);
+    if (g_debugLog) {
+        static uint64_t s_lastPressed[2] = { 0, 0 };
+        static uint64_t s_lastTouched[2] = { 0, 0 };
+        static uint32_t s_lastMask[2]    = { 0, 0 };
+        int idx = isLeftHand ? 0 : 1;
+        if (rawPressed != s_lastPressed[idx] || rawTouched != s_lastTouched[idx] || next != s_lastMask[idx]) {
+            s_lastPressed[idx] = rawPressed;
+            s_lastTouched[idx] = rawTouched;
+            s_lastMask[idx]    = next;
+            Log("[State %s] ctx=%d rawP=0x%016llX rawT=0x%016llX mask=0x%03X -> outP=0x%016llX ax0=(%.2f,%.2f) ax1=%.2f",
+                isLeftHand ? "L" : "R", ctxIdx,
+                static_cast<unsigned long long>(rawPressed),
+                static_cast<unsigned long long>(rawTouched),
+                next,
+                static_cast<unsigned long long>(st->ulButtonPressed),
+                st->rAxis[0].x, st->rAxis[0].y, st->rAxis[1].x);
+        }
     }
 }
 
@@ -645,6 +663,10 @@ static bool __fastcall Hooked_GetControllerState(void* self, uint32_t unDeviceIn
     bool ok = g_origGetControllerState ? g_origGetControllerState(self, unDeviceIndex, pState, unSize) : false;
     if (ok && pState && unSize >= sizeof(VRControllerState_t)) {
         int role = QueryHandRole(self, unDeviceIndex);
+        static std::atomic<bool> s_loggedFirst{ false };
+        if (!s_loggedFirst.exchange(true)) {
+            Log("[OpenVR] First GetControllerState call: dev=%u role=%d size=%u", unDeviceIndex, role, unSize);
+        }
         if (role == kRole_LeftHand || role == kRole_RightHand) {
             ProcessControllerState(role == kRole_LeftHand, pState);
         }
@@ -656,6 +678,10 @@ static bool __fastcall Hooked_GetControllerStateWithPose(void* self, int eOrigin
     bool ok = g_origGetControllerStateWithPose ? g_origGetControllerStateWithPose(self, eOrigin, unDeviceIndex, pState, unSize, pPose) : false;
     if (ok && pState && unSize >= sizeof(VRControllerState_t)) {
         int role = QueryHandRole(self, unDeviceIndex);
+        static std::atomic<bool> s_loggedFirstPose{ false };
+        if (!s_loggedFirstPose.exchange(true)) {
+            Log("[OpenVR] First GetControllerStateWithPose call: dev=%u role=%d size=%u", unDeviceIndex, role, unSize);
+        }
         if (role == kRole_LeftHand || role == kRole_RightHand) {
             ProcessControllerState(role == kRole_LeftHand, pState);
         }

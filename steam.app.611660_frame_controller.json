@@ -14,12 +14,12 @@
          "hidden": true
       },
       "/actions/legacy/in/left_axis3_press": {
-         "alias_name": "Left D-Pad Left (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/left_axis3_touch": {
-         "alias_name": "Left D-Pad Up (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/left_axis3_value_e0": {
          "alias_name": "",
@@ -30,12 +30,12 @@
          "hidden": true
       },
       "/actions/legacy/in/left_axis4_press": {
-         "alias_name": "Left D-Pad Right (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/left_axis4_touch": {
-         "alias_name": "Left D-Pad Down (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/left_axis4_value_e0": {
          "alias_name": "",
@@ -50,16 +50,20 @@
          "hidden": true
       },
       "/actions/legacy/in/left_system_touch": {
-         "alias_name": "",
-         "hidden": true
+         "alias_name": "Left View (SteamFrameControls)",
+         "hidden": false
       },
-      "/actions/legacy/in/right_axis3_press": {
+      "/actions/legacy/in/right_axis2_press": {
          "alias_name": "Right X (SteamFrameControls)",
          "hidden": false
       },
+      "/actions/legacy/in/right_axis3_press": {
+         "alias_name": "",
+         "hidden": true
+      },
       "/actions/legacy/in/right_axis3_touch": {
-         "alias_name": "Right Bumper (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/right_axis3_value_e0": {
          "alias_name": "",
@@ -70,12 +74,12 @@
          "hidden": true
       },
       "/actions/legacy/in/right_axis4_press": {
-         "alias_name": "Right Y (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/right_axis4_touch": {
-         "alias_name": "Right Menu (SteamFrameControls)",
-         "hidden": false
+         "alias_name": "",
+         "hidden": true
       },
       "/actions/legacy/in/right_axis4_value_e0": {
          "alias_name": "",
@@ -90,8 +94,8 @@
          "hidden": true
       },
       "/actions/legacy/in/right_system_touch": {
-         "alias_name": "",
-         "hidden": true
+         "alias_name": "Right Y (SteamFrameControls)",
+         "hidden": false
       },
       "/actions/legacy_mirrored/in/axis2_press": {
          "alias_name": "",
@@ -251,10 +255,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/left_applicationmenu_press"
-                  },
-                  "touch": {
-                     "output": "/actions/legacy/in/left_applicationmenu_touch"
+                     "output": "/actions/legacy/in/left_system_touch"
                   }
                },
                "mode": "button",
@@ -272,7 +273,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/left_axis3_press"
+                     "output": "/actions/legacy/in/left_a_press"
                   }
                },
                "mode": "button",
@@ -281,7 +282,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/left_axis4_press"
+                     "output": "/actions/legacy/in/left_applicationmenu_press"
                   }
                },
                "mode": "button",
@@ -290,7 +291,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/left_axis3_touch"
+                     "output": "/actions/legacy/in/left_a_touch"
                   }
                },
                "mode": "button",
@@ -299,7 +300,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/left_axis4_touch"
+                     "output": "/actions/legacy/in/left_applicationmenu_touch"
                   }
                },
                "mode": "button",
@@ -418,7 +419,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/right_axis3_press"
+                     "output": "/actions/legacy/in/right_axis2_press"
                   }
                },
                "mode": "button",
@@ -427,7 +428,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/right_axis4_press"
+                     "output": "/actions/legacy/in/right_system_touch"
                   }
                },
                "mode": "button",
@@ -436,7 +437,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/right_axis3_touch"
+                     "output": "/actions/legacy/in/right_axis0_press"
                   }
                },
                "mode": "button",
@@ -445,7 +446,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/right_axis4_touch"
+                     "output": "/actions/legacy/in/right_applicationmenu_press"
                   }
                },
                "mode": "button",
@@ -456,9 +457,9 @@
    },
    "category": "legacy",
    "controller_type": "frame_controller",
-   "description": "Steam Frame Controller binding for Fallout 4 VR paired with the SteamFrameControls F4SEVR mod. Maps core controls to Oculus Touch emulation and routes D-Pad, Bumpers, X, Y, and Menu via spare legacy bits for context-aware menu and gameplay controls.",
+   "description": "Steam Frame Controller binding v1.1 for Fallout 4 VR paired with SteamFrameControls F4SEVR. Uses 100% Oculus Touch-compatible legacy carrier bits for Left D-Pad, Left Bumper, Left View, Right X, and Right Y.",
    "interaction_profile": "",
-   "name": "Fallout 4 VR - Steam Frame Controls (F4SEVR)",
+   "name": "Fallout 4 VR - Steam Frame Controls v1.1 (F4SEVR)",
    "options": {
       "mirror_actions": false,
       "simulate_rendermodel": false,
