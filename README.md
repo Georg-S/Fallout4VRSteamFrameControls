@@ -1,5 +1,7 @@
 # SteamFrameControls — Fallout 4 VR
 
+Disclaimer: Project is pretty much entirely vibe coded
+
 Context-aware controller remapper (F4SEVR plugin) and SteamVR legacy binding for **Valve Steam Frame** controllers in **Fallout 4 VR** (`v1.2.72.0`).
 
 ## Features
