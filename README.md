@@ -32,11 +32,10 @@ All mappings and stick-inversion options can be customized in `mod/SteamFrameCon
 Requires CMake 3.20+ and Visual Studio 2022 (MSVC x64):
 
 ```powershell
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Release
+.\build.ps1
 ```
 
-The compiled plugin is written to `build/Release/SteamFrameControls.dll`.
+This builds `build/Release/SteamFrameControls.dll`, copies it into `mod/SteamFrameControls/F4SE/Plugins/`, and packages `SteamFrameControls-MO2.zip`.
 
 ## License
 
