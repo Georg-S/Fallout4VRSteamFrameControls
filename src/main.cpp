@@ -193,6 +193,10 @@ struct ContextMapping {
 
 static ContextMapping g_config[static_cast<int>(MenuContext::Count)];
 static float g_stickMagnitude = 0.95f;
+static bool g_invertPipboyLeftX  = false;
+static bool g_invertPipboyLeftY  = false;
+static bool g_invertPipboyRightX = true;
+static bool g_invertPipboyRightY = true;
 
 static TargetAction ParseAction(const char* str) {
     if (!str || !*str) return TargetAction::None;
@@ -232,7 +236,7 @@ static void SetDefaultConfig() {
     cm[static_cast<int>(FrameButton::RightY)]      = TargetAction::RA;
     cm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RGrip;
 
-    // PipboyMenu (r_a = Prev Tab, r_b = Next Tab, RightY = r_trigger for Perk/Skill chart)
+    // PipboyMenu (r_a = Prev Tab, r_b = Next Tab, RightY = l_trigger for Perk/Skill chart)
     auto& pm = g_config[static_cast<int>(MenuContext::PipboyMenu)].map;
     pm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::RA;
     pm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RB;
@@ -241,7 +245,7 @@ static void SetDefaultConfig() {
     pm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickLeft;
     pm[static_cast<int>(FrameButton::RightBumper)] = TargetAction::LStickRight;
     pm[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
-    pm[static_cast<int>(FrameButton::RightY)]      = TargetAction::RTrigger;
+    pm[static_cast<int>(FrameButton::RightY)]      = TargetAction::LTrigger;
     pm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RGrip;
 
     // WorkshopMenu / Crafting / Cooking
@@ -318,7 +322,15 @@ static void LoadConfig() {
         }
     }
 
-    Log("[Config] Loaded %s (bDebugLog=%d, fStickMagnitude=%.2f)", iniPath, g_debugLog ? 1 : 0, g_stickMagnitude);
+    g_invertPipboyLeftX  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickX",  0, iniPath) != 0;
+    g_invertPipboyLeftY  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickY",  0, iniPath) != 0;
+    g_invertPipboyRightX = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickX", 1, iniPath) != 0;
+    g_invertPipboyRightY = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickY", 1, iniPath) != 0;
+
+    Log("[Config] Loaded %s (bDebugLog=%d, fStickMagnitude=%.2f, invertPipboyStick L=(%d,%d) R=(%d,%d))",
+        iniPath, g_debugLog ? 1 : 0, g_stickMagnitude,
+        g_invertPipboyLeftX ? 1 : 0, g_invertPipboyLeftY ? 1 : 0,
+        g_invertPipboyRightX ? 1 : 0, g_invertPipboyRightY ? 1 : 0);
 }
 
 // ============================================================================
@@ -607,6 +619,17 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
     int ctxIdx = g_activeContext.load(std::memory_order_acquire);
     if (ctxIdx < 0 || ctxIdx >= static_cast<int>(MenuContext::Count)) {
         ctxIdx = static_cast<int>(MenuContext::Gameplay);
+    }
+
+    // Optional physical analog stick inversion in PipboyMenu (fixes inverted map panning)
+    if (ctxIdx == static_cast<int>(MenuContext::PipboyMenu)) {
+        if (isLeftHand) {
+            if (g_invertPipboyLeftX) st->rAxis[0].x = -st->rAxis[0].x;
+            if (g_invertPipboyLeftY) st->rAxis[0].y = -st->rAxis[0].y;
+        } else {
+            if (g_invertPipboyRightX) st->rAxis[0].x = -st->rAxis[0].x;
+            if (g_invertPipboyRightY) st->rAxis[0].y = -st->rAxis[0].y;
+        }
     }
 
     bool modified = false;
