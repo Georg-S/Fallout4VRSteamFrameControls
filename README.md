@@ -7,7 +7,7 @@ Context-aware controller remapper (F4SEVR plugin) and SteamVR legacy binding for
 - Full support for the Steam Frame's extra inputs (Left D-Pad, Bumpers, Left/Right Menu buttons, Right X/Y) under Fallout 4 VR's legacy Oculus Touch emulation.
 - Context-aware bindings for **Gameplay**, **Pip-Boy**, **Container / Workbench / Barter**, and **Workshop / Crafting** menus, configurable via `SteamFrameControls.ini`.
 - **Map-tab-only stick inversion**: fixes Fallout 4 VR's inverted drag-style map panning on both sticks while keeping STAT / INV / DATA / RADIO list scrolling normal.
-- Compatible with `F4VRControlsConfig`, `FallUI VR`, `PipboyTabsVR`, `FRIK`, and `Virtual Holsters`.
+- Compatible with any Fallout 4 VR (`v1.2.72.0` + F4SEVR) setup — no mod dependencies required. Tested with the **Gingas Fallout VR Essentials Overhaul** (including `F4VRControlsConfig`, `FallUI VR`, `PipboyTabsVR`, `FRIK`, and `Virtual Holsters`).
 
 ## Default Controls (Extra Steam Frame Buttons)
 
