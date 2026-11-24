@@ -149,6 +149,7 @@ enum class FrameButton : int {
     DpadUp,
     DpadDown,
     LeftBumper,
+    LeftView,
     RightX,
     RightY,
     RightBumper,
@@ -233,6 +234,7 @@ static void SetDefaultConfig() {
     cm[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     cm[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     cm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickLeft;
+    cm[static_cast<int>(FrameButton::LeftView)]    = TargetAction::RGrip;
     cm[static_cast<int>(FrameButton::RightBumper)] = TargetAction::LStickRight;
     cm[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
     cm[static_cast<int>(FrameButton::RightY)]      = TargetAction::RA;
@@ -245,6 +247,7 @@ static void SetDefaultConfig() {
     pm[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     pm[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     pm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickLeft;
+    pm[static_cast<int>(FrameButton::LeftView)]    = TargetAction::RGrip;
     pm[static_cast<int>(FrameButton::RightBumper)] = TargetAction::LStickRight;
     pm[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
     pm[static_cast<int>(FrameButton::RightY)]      = TargetAction::LTrigger;
@@ -257,22 +260,24 @@ static void SetDefaultConfig() {
     wm[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     wm[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     wm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LTrigger;
+    wm[static_cast<int>(FrameButton::LeftView)]    = TargetAction::LY;
     wm[static_cast<int>(FrameButton::RightBumper)] = TargetAction::RTrigger;
     wm[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
     wm[static_cast<int>(FrameButton::RightY)]      = TargetAction::LY;
-    wm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RB;
+    wm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::LY;
 
-    // OtherMenu
+    // OtherMenu (PauseMenu, Dialogue, Terminal, MainMenu, etc.)
     auto& om = g_config[static_cast<int>(MenuContext::OtherMenu)].map;
     om[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::LStickLeft;
     om[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::LStickRight;
     om[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     om[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     om[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LTrigger;
+    om[static_cast<int>(FrameButton::LeftView)]    = TargetAction::LY;
     om[static_cast<int>(FrameButton::RightBumper)] = TargetAction::RTrigger;
     om[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
     om[static_cast<int>(FrameButton::RightY)]      = TargetAction::LY;
-    om[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RB;
+    om[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::LY;
 
     // Gameplay
     auto& gp = g_config[static_cast<int>(MenuContext::Gameplay)].map;
@@ -281,6 +286,7 @@ static void SetDefaultConfig() {
     gp[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LTrigger;
     gp[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::RStickDown;
     gp[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickClick;
+    gp[static_cast<int>(FrameButton::LeftView)]    = TargetAction::LY;
     gp[static_cast<int>(FrameButton::RightBumper)] = TargetAction::RStickClick;
     gp[static_cast<int>(FrameButton::RightX)]      = TargetAction::RGrip;
     gp[static_cast<int>(FrameButton::RightY)]      = TargetAction::RStickUp;
@@ -312,7 +318,7 @@ static void LoadConfig() {
         "Gameplay", "ContainerMenu", "PipboyMenu", "WorkshopMenu", "OtherMenu"
     };
     const char* keyNames[static_cast<int>(FrameButton::Count)] = {
-        "DpadLeft", "DpadRight", "DpadUp", "DpadDown", "LeftBumper",
+        "DpadLeft", "DpadRight", "DpadUp", "DpadDown", "LeftBumper", "LeftView",
         "RightX", "RightY", "RightBumper", "RightMenu"
     };
 
@@ -606,33 +612,39 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
                    (1u << static_cast<int>(FrameButton::DpadUp))    |
                    (1u << static_cast<int>(FrameButton::DpadDown))  |
                    (1u << static_cast<int>(FrameButton::LeftBumper))|
-                   (1u << static_cast<int>(FrameButton::RightMenu)); // Left View reuses RightMenu slot (Pause/Cancel)
+                   (1u << static_cast<int>(FrameButton::LeftView));
 
-        // SteamVR sets both pressed AND touched for a pressed button, so only treat
-        // touch-without-press as DpadUp / DpadDown to avoid firing two directions at once.
+        // SteamVR sets both pressed AND touched for a pressed button.
+        // Left View binds BOTH left_a_press + left_applicationmenu_press simultaneously
+        // (impossible on a physical rocker D-Pad), giving us a 100% Oculus-compatible carrier!
         const bool pA   = (st->ulButtonPressed & BitMask(kBtn_A)) != 0;
         const bool pApp = (st->ulButtonPressed & BitMask(kBtn_ApplicationMenu)) != 0;
         const bool tA   = (st->ulButtonTouched & BitMask(kBtn_A)) != 0;
         const bool tApp = (st->ulButtonTouched & BitMask(kBtn_ApplicationMenu)) != 0;
 
-        if (pA)        handBits |= (1u << static_cast<int>(FrameButton::DpadLeft));
-        else if (tA)   handBits |= (1u << static_cast<int>(FrameButton::DpadUp));
+        if (pA && pApp) {
+            handBits |= (1u << static_cast<int>(FrameButton::LeftView));
+        } else {
+            if (pA)        handBits |= (1u << static_cast<int>(FrameButton::DpadLeft));
+            else if (tA)   handBits |= (1u << static_cast<int>(FrameButton::DpadUp));
 
-        if (pApp)      handBits |= (1u << static_cast<int>(FrameButton::DpadRight));
-        else if (tApp) handBits |= (1u << static_cast<int>(FrameButton::DpadDown));
+            if (pApp)      handBits |= (1u << static_cast<int>(FrameButton::DpadRight));
+            else if (tApp) handBits |= (1u << static_cast<int>(FrameButton::DpadDown));
+        }
 
-        if (st->ulButtonPressed & BitMask(kBtn_Axis2))  handBits |= (1u << static_cast<int>(FrameButton::LeftBumper));
-        if (st->ulButtonTouched & BitMask(kBtn_System)) handBits |= (1u << static_cast<int>(FrameButton::RightMenu));
+        if (st->ulButtonPressed & BitMask(kBtn_Axis2)) handBits |= (1u << static_cast<int>(FrameButton::LeftBumper));
 
         // Strip carrier bits before injecting context-aware actions
         st->ulButtonPressed &= ~(BitMask(kBtn_A) | BitMask(kBtn_ApplicationMenu) | BitMask(kBtn_Axis2));
-        st->ulButtonTouched &= ~(BitMask(kBtn_A) | BitMask(kBtn_ApplicationMenu) | BitMask(kBtn_System));
+        st->ulButtonTouched &= ~(BitMask(kBtn_A) | BitMask(kBtn_ApplicationMenu));
     } else {
         handMask = (1u << static_cast<int>(FrameButton::RightX)) |
-                   (1u << static_cast<int>(FrameButton::RightY));
+                   (1u << static_cast<int>(FrameButton::RightY)) |
+                   (1u << static_cast<int>(FrameButton::RightMenu));
 
         // Same touch-without-press trick as Left D-Pad: A/B pass through natively,
-        // while Right X (right_a_touch) and Right Y (right_applicationmenu_touch) are decoded and stripped.
+        // while Right X (right_a_touch), Right Y (right_applicationmenu_touch),
+        // and Right Menu (right_axis2_press) are decoded and stripped.
         const bool pA   = (st->ulButtonPressed & BitMask(kBtn_A)) != 0;
         const bool pApp = (st->ulButtonPressed & BitMask(kBtn_ApplicationMenu)) != 0;
         const bool tA   = (st->ulButtonTouched & BitMask(kBtn_A)) != 0;
@@ -645,6 +657,10 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
         if (!pApp && tApp) {
             handBits |= (1u << static_cast<int>(FrameButton::RightY));
             st->ulButtonTouched &= ~BitMask(kBtn_ApplicationMenu);
+        }
+        if (st->ulButtonPressed & BitMask(kBtn_Axis2)) {
+            handBits |= (1u << static_cast<int>(FrameButton::RightMenu));
+            st->ulButtonPressed &= ~BitMask(kBtn_Axis2);
         }
     }
 
