@@ -193,10 +193,10 @@ struct ContextMapping {
 
 static ContextMapping g_config[static_cast<int>(MenuContext::Count)];
 static float g_stickMagnitude = 0.95f;
-static bool g_invertPipboyLeftX  = true;
-static bool g_invertPipboyLeftY  = true;
-static bool g_invertPipboyRightX = true;
-static bool g_invertPipboyRightY = true;
+static bool g_invertPipboyLeftX  = false;
+static bool g_invertPipboyLeftY  = false;
+static bool g_invertPipboyRightX = false;
+static bool g_invertPipboyRightY = false;
 
 static TargetAction ParseAction(const char* str) {
     if (!str || !*str) return TargetAction::None;
@@ -322,10 +322,10 @@ static void LoadConfig() {
         }
     }
 
-    g_invertPipboyLeftX  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickX",  1, iniPath) != 0;
-    g_invertPipboyLeftY  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickY",  1, iniPath) != 0;
-    g_invertPipboyRightX = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickX", 1, iniPath) != 0;
-    g_invertPipboyRightY = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickY", 1, iniPath) != 0;
+    g_invertPipboyLeftX  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickX",  0, iniPath) != 0;
+    g_invertPipboyLeftY  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickY",  0, iniPath) != 0;
+    g_invertPipboyRightX = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickX", 0, iniPath) != 0;
+    g_invertPipboyRightY = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickY", 0, iniPath) != 0;
 
     Log("[Config] Loaded %s (bDebugLog=%d, fStickMagnitude=%.2f, invertPipboyStick L=(%d,%d) R=(%d,%d))",
         iniPath, g_debugLog ? 1 : 0, g_stickMagnitude,
