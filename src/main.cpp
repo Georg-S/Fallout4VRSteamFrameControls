@@ -232,10 +232,10 @@ static void SetDefaultConfig() {
     cm[static_cast<int>(FrameButton::RightY)]      = TargetAction::LY;
     cm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RB;
 
-    // PipboyMenu
+    // PipboyMenu (A/B switch main tabs in FO4VR Oculus Touch mode; L-Stick L/R switches sub-tabs)
     auto& pm = g_config[static_cast<int>(MenuContext::PipboyMenu)].map;
-    pm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::LTrigger;
-    pm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RTrigger;
+    pm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::RB;
+    pm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RA;
     pm[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     pm[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     pm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickLeft;
@@ -566,12 +566,21 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
                    (1u << static_cast<int>(FrameButton::LeftBumper))|
                    (1u << static_cast<int>(FrameButton::RightMenu)); // Left View reuses RightMenu slot (Pause/Cancel)
 
-        if (st->ulButtonPressed & BitMask(kBtn_A))               handBits |= (1u << static_cast<int>(FrameButton::DpadLeft));
-        if (st->ulButtonPressed & BitMask(kBtn_ApplicationMenu)) handBits |= (1u << static_cast<int>(FrameButton::DpadRight));
-        if (st->ulButtonTouched & BitMask(kBtn_A))               handBits |= (1u << static_cast<int>(FrameButton::DpadUp));
-        if (st->ulButtonTouched & BitMask(kBtn_ApplicationMenu)) handBits |= (1u << static_cast<int>(FrameButton::DpadDown));
-        if (st->ulButtonPressed & BitMask(kBtn_Axis2))           handBits |= (1u << static_cast<int>(FrameButton::LeftBumper));
-        if (st->ulButtonTouched & BitMask(kBtn_System))          handBits |= (1u << static_cast<int>(FrameButton::RightMenu));
+        // SteamVR sets both pressed AND touched for a pressed button, so only treat
+        // touch-without-press as DpadUp / DpadDown to avoid firing two directions at once.
+        const bool pA   = (st->ulButtonPressed & BitMask(kBtn_A)) != 0;
+        const bool pApp = (st->ulButtonPressed & BitMask(kBtn_ApplicationMenu)) != 0;
+        const bool tA   = (st->ulButtonTouched & BitMask(kBtn_A)) != 0;
+        const bool tApp = (st->ulButtonTouched & BitMask(kBtn_ApplicationMenu)) != 0;
+
+        if (pA)        handBits |= (1u << static_cast<int>(FrameButton::DpadLeft));
+        else if (tA)   handBits |= (1u << static_cast<int>(FrameButton::DpadUp));
+
+        if (pApp)      handBits |= (1u << static_cast<int>(FrameButton::DpadRight));
+        else if (tApp) handBits |= (1u << static_cast<int>(FrameButton::DpadDown));
+
+        if (st->ulButtonPressed & BitMask(kBtn_Axis2))  handBits |= (1u << static_cast<int>(FrameButton::LeftBumper));
+        if (st->ulButtonTouched & BitMask(kBtn_System)) handBits |= (1u << static_cast<int>(FrameButton::RightMenu));
 
         // Strip carrier bits before injecting context-aware actions
         st->ulButtonPressed &= ~(BitMask(kBtn_A) | BitMask(kBtn_ApplicationMenu) | BitMask(kBtn_Axis2));
