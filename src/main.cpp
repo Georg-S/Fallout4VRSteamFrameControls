@@ -193,6 +193,8 @@ struct ContextMapping {
 
 static ContextMapping g_config[static_cast<int>(MenuContext::Count)];
 static float g_stickMagnitude = 0.95f;
+static bool g_invertMapStickX    = true;
+static bool g_invertMapStickY    = true;
 static bool g_invertPipboyLeftX  = false;
 static bool g_invertPipboyLeftY  = false;
 static bool g_invertPipboyRightX = false;
@@ -322,25 +324,53 @@ static void LoadConfig() {
         }
     }
 
+    g_invertMapStickX    = GetPrivateProfileIntA("PipboyMenu", "bInvertMapStickX",   1, iniPath) != 0;
+    g_invertMapStickY    = GetPrivateProfileIntA("PipboyMenu", "bInvertMapStickY",   1, iniPath) != 0;
     g_invertPipboyLeftX  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickX",  0, iniPath) != 0;
     g_invertPipboyLeftY  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickY",  0, iniPath) != 0;
     g_invertPipboyRightX = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickX", 0, iniPath) != 0;
     g_invertPipboyRightY = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickY", 0, iniPath) != 0;
 
-    Log("[Config] Loaded %s (bDebugLog=%d, fStickMagnitude=%.2f, invertPipboyStick L=(%d,%d) R=(%d,%d))",
+    Log("[Config] Loaded %s (bDebugLog=%d, fStickMagnitude=%.2f, invertMap=(%d,%d))",
         iniPath, g_debugLog ? 1 : 0, g_stickMagnitude,
-        g_invertPipboyLeftX ? 1 : 0, g_invertPipboyLeftY ? 1 : 0,
-        g_invertPipboyRightX ? 1 : 0, g_invertPipboyRightY ? 1 : 0);
+        g_invertMapStickX ? 1 : 0, g_invertMapStickY ? 1 : 0);
 }
 
 // ============================================================================
 // Fallout 4 VR 1.2.72.0 Menu Tracking (RE::UI + MenuOpenCloseEvent)
 // ============================================================================
-// Verified against VR Address Library version-1-2-72-0.csv:
+// Verified against VR Address Library version-1-2-72-0.csv & PipboyTabsVR:
 //   RE::UI::GetSingleton()  -> ID 548587  -> RVA 0x05932320
 //   RE::BSSpinLock::lock()  -> ID 1425657 -> RVA 0x00024E10
-constexpr uintptr_t kRVA_UI_Singleton   = 0x05932320;
-constexpr uintptr_t kRVA_BSSpinLockLock = 0x00024E10;
+//   Pip-Boy currentPage     -> RVA 0x05AC9F54 (0=STAT, 1=INV, 2=DATA, 3=MAP, 4=RADIO)
+constexpr uintptr_t kRVA_UI_Singleton      = 0x05932320;
+constexpr uintptr_t kRVA_BSSpinLockLock    = 0x00024E10;
+constexpr uintptr_t kRVA_PipboyCurrentPage = 0x05AC9F54;
+constexpr uint32_t  kPipboyPage_Map        = 3;
+
+static bool IsPipboyMapTabActive() {
+    static const volatile uint32_t* s_pagePtr = nullptr;
+    static std::atomic<int> s_initState{ 0 }; // 0=uninit, 1=valid, -1=invalid
+
+    int st = s_initState.load(std::memory_order_acquire);
+    if (st == 0) {
+        auto exeBase = reinterpret_cast<uintptr_t>(GetModuleHandleA(nullptr));
+        const void* addr = exeBase ? reinterpret_cast<const void*>(exeBase + kRVA_PipboyCurrentPage) : nullptr;
+        MEMORY_BASIC_INFORMATION mbi{};
+        if (addr && VirtualQuery(addr, &mbi, sizeof(mbi)) == sizeof(mbi) &&
+            mbi.State == MEM_COMMIT &&
+            !(mbi.Protect & (PAGE_NOACCESS | PAGE_GUARD))) {
+            s_pagePtr = reinterpret_cast<const volatile uint32_t*>(addr);
+            s_initState.store(1, std::memory_order_release);
+            st = 1;
+        } else {
+            s_initState.store(-1, std::memory_order_release);
+            st = -1;
+        }
+    }
+    if (st != 1 || !s_pagePtr) return false;
+    return (*s_pagePtr) == kPipboyPage_Map;
+}
 
 static std::mutex g_menuMutex;
 static std::unordered_set<std::string> g_openMenus;
@@ -630,9 +660,14 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
         ctxIdx = static_cast<int>(MenuContext::Gameplay);
     }
 
-    // Optional physical analog stick inversion in PipboyMenu (fixes inverted map panning)
+    // Physical analog stick inversion in PipboyMenu:
+    // On the MAP tab (page == 3), invert both sticks so panning moves naturally instead of drag-style.
+    // On STAT / INV / DATA / RADIO, leave sticks normal (unless explicitly enabled in INI).
     if (ctxIdx == static_cast<int>(MenuContext::PipboyMenu)) {
-        if (isLeftHand) {
+        if (IsPipboyMapTabActive()) {
+            if (g_invertMapStickX) st->rAxis[0].x = -st->rAxis[0].x;
+            if (g_invertMapStickY) st->rAxis[0].y = -st->rAxis[0].y;
+        } else if (isLeftHand) {
             if (g_invertPipboyLeftX) st->rAxis[0].x = -st->rAxis[0].x;
             if (g_invertPipboyLeftY) st->rAxis[0].y = -st->rAxis[0].y;
         } else {
