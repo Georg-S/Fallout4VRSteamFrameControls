@@ -193,8 +193,8 @@ struct ContextMapping {
 
 static ContextMapping g_config[static_cast<int>(MenuContext::Count)];
 static float g_stickMagnitude = 0.95f;
-static bool g_invertPipboyLeftX  = false;
-static bool g_invertPipboyLeftY  = false;
+static bool g_invertPipboyLeftX  = true;
+static bool g_invertPipboyLeftY  = true;
 static bool g_invertPipboyRightX = true;
 static bool g_invertPipboyRightY = true;
 
@@ -322,8 +322,8 @@ static void LoadConfig() {
         }
     }
 
-    g_invertPipboyLeftX  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickX",  0, iniPath) != 0;
-    g_invertPipboyLeftY  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickY",  0, iniPath) != 0;
+    g_invertPipboyLeftX  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickX",  1, iniPath) != 0;
+    g_invertPipboyLeftY  = GetPrivateProfileIntA("PipboyMenu", "bInvertLeftStickY",  1, iniPath) != 0;
     g_invertPipboyRightX = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickX", 1, iniPath) != 0;
     g_invertPipboyRightY = GetPrivateProfileIntA("PipboyMenu", "bInvertRightStickY", 1, iniPath) != 0;
 
@@ -601,12 +601,21 @@ static void ProcessControllerState(bool isLeftHand, VRControllerState_t* st) {
         handMask = (1u << static_cast<int>(FrameButton::RightX)) |
                    (1u << static_cast<int>(FrameButton::RightY));
 
-        if (st->ulButtonPressed & BitMask(kBtn_Axis2))  handBits |= (1u << static_cast<int>(FrameButton::RightX));
-        if (st->ulButtonTouched & BitMask(kBtn_System)) handBits |= (1u << static_cast<int>(FrameButton::RightY));
+        // Same touch-without-press trick as Left D-Pad: A/B pass through natively,
+        // while Right X (right_a_touch) and Right Y (right_applicationmenu_touch) are decoded and stripped.
+        const bool pA   = (st->ulButtonPressed & BitMask(kBtn_A)) != 0;
+        const bool pApp = (st->ulButtonPressed & BitMask(kBtn_ApplicationMenu)) != 0;
+        const bool tA   = (st->ulButtonTouched & BitMask(kBtn_A)) != 0;
+        const bool tApp = (st->ulButtonTouched & BitMask(kBtn_ApplicationMenu)) != 0;
 
-        // Strip carrier bits
-        st->ulButtonPressed &= ~BitMask(kBtn_Axis2);
-        st->ulButtonTouched &= ~BitMask(kBtn_System);
+        if (!pA && tA) {
+            handBits |= (1u << static_cast<int>(FrameButton::RightX));
+            st->ulButtonTouched &= ~BitMask(kBtn_A);
+        }
+        if (!pApp && tApp) {
+            handBits |= (1u << static_cast<int>(FrameButton::RightY));
+            st->ulButtonTouched &= ~BitMask(kBtn_ApplicationMenu);
+        }
     }
 
     // Atomically update this hand's slice of the combined pressed bitmask

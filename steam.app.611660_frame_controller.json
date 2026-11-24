@@ -396,9 +396,6 @@
                "inputs": {
                   "click": {
                      "output": "/actions/legacy/in/right_a_press"
-                  },
-                  "touch": {
-                     "output": "/actions/legacy/in/right_a_touch"
                   }
                },
                "mode": "button",
@@ -408,9 +405,6 @@
                "inputs": {
                   "click": {
                      "output": "/actions/legacy/in/right_applicationmenu_press"
-                  },
-                  "touch": {
-                     "output": "/actions/legacy/in/right_applicationmenu_touch"
                   }
                },
                "mode": "button",
@@ -419,7 +413,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/right_axis2_press"
+                     "output": "/actions/legacy/in/right_a_touch"
                   }
                },
                "mode": "button",
@@ -428,7 +422,7 @@
             {
                "inputs": {
                   "click": {
-                     "output": "/actions/legacy/in/right_system_touch"
+                     "output": "/actions/legacy/in/right_applicationmenu_touch"
                   }
                },
                "mode": "button",
@@ -457,9 +451,9 @@
    },
    "category": "legacy",
    "controller_type": "frame_controller",
-   "description": "Steam Frame Controller binding v1.1 for Fallout 4 VR paired with SteamFrameControls F4SEVR. Uses 100% Oculus Touch-compatible legacy carrier bits for Left D-Pad, Left Bumper, Left View, Right X, and Right Y.",
+   "description": "Steam Frame Controller binding v1.2 for Fallout 4 VR paired with SteamFrameControls F4SEVR. Uses 100% Oculus Touch-compatible legacy carrier bits for Left D-Pad, Left Bumper, Right X, and Right Y.",
    "interaction_profile": "",
-   "name": "Fallout 4 VR - Steam Frame Controls v1.1 (F4SEVR)",
+   "name": "Fallout 4 VR - Steam Frame Controls v1.2 (F4SEVR)",
    "options": {
       "mirror_actions": false,
       "simulate_rendermodel": false,
