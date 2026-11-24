@@ -220,29 +220,29 @@ static TargetAction ParseAction(const char* str) {
 }
 
 static void SetDefaultConfig() {
-    // ContainerMenu / BarterMenu
+    // ContainerMenu / BarterMenu (r_a = Prev Tab, r_b = Next Tab in FO4VR Oculus Touch mode)
     auto& cm = g_config[static_cast<int>(MenuContext::ContainerMenu)].map;
-    cm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::LTrigger;
-    cm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RTrigger;
+    cm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::RA;
+    cm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RB;
     cm[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     cm[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     cm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickLeft;
     cm[static_cast<int>(FrameButton::RightBumper)] = TargetAction::LStickRight;
     cm[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
     cm[static_cast<int>(FrameButton::RightY)]      = TargetAction::LY;
-    cm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RB;
+    cm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RGrip;
 
-    // PipboyMenu (A/B switch main tabs in FO4VR Oculus Touch mode; L-Stick L/R switches sub-tabs)
+    // PipboyMenu (r_a = Prev Tab, r_b = Next Tab in FO4VR Oculus Touch mode)
     auto& pm = g_config[static_cast<int>(MenuContext::PipboyMenu)].map;
-    pm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::RB;
-    pm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RA;
+    pm[static_cast<int>(FrameButton::DpadLeft)]    = TargetAction::RA;
+    pm[static_cast<int>(FrameButton::DpadRight)]   = TargetAction::RB;
     pm[static_cast<int>(FrameButton::DpadUp)]      = TargetAction::LStickUp;
     pm[static_cast<int>(FrameButton::DpadDown)]    = TargetAction::LStickDown;
     pm[static_cast<int>(FrameButton::LeftBumper)]  = TargetAction::LStickLeft;
     pm[static_cast<int>(FrameButton::RightBumper)] = TargetAction::LStickRight;
     pm[static_cast<int>(FrameButton::RightX)]      = TargetAction::LX;
     pm[static_cast<int>(FrameButton::RightY)]      = TargetAction::LY;
-    pm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RB;
+    pm[static_cast<int>(FrameButton::RightMenu)]   = TargetAction::RGrip;
 
     // WorkshopMenu / Crafting / Cooking
     auto& wm = g_config[static_cast<int>(MenuContext::WorkshopMenu)].map;
