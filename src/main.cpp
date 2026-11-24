@@ -831,8 +831,6 @@ bool F4SEPlugin_Load(const F4SEInterface* f4se) {
         Log("[OpenVR] IAT hook not applied (will try direct hook when OpenVR initializes)");
     }
 
-    TryDirectHookOpenVR();
-
     if (f4se && f4se->QueryInterface && f4se->GetPluginHandle) {
         auto* messaging = static_cast<F4SEMessagingInterface*>(f4se->QueryInterface(kInterface_Messaging));
         if (messaging && messaging->RegisterListener) {
